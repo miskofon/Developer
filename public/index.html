@@ -14,54 +14,77 @@
 		<script src="js/Detector.js"></script>
 	</head>
 	<body>
-
-		
-
 		<script>
 		
 			var camera, scene, renderer;
 			var mesh;
 
-			init();
-			animate();
+			window.DevEngine = window.DevEngine || {};
+			DevEngine.walls = {};
+			DevEngine.interactions = {};
+			DevEngine.meshes = {};
+			//animate();
 
-			function init() {
-
-				if(Detector.webgl){ 
-                    renderer = new THREE.WebGLRenderer({antialias:true}); 
- 
-                // If its not supported, instantiate the canvas renderer to support all non WebGL 
-                // browsers 
-                } else { 
-                    renderer = new THREE.CanvasRenderer(); 
-                } 
+					
+			DevEngine.init = function() {
+			var WIDTH = window.innerWidth,
+				HEIGHT = window.innerHeight;
 				
-				scene = new THREE.Scene();
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
 				
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
-
-				renderer.setClearColor(0x000000, 1); 
-
-				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 100 );
-				camera.position.z = 10;
-				camera.lookAt(scene.position);
-
-				window.addEventListener( 'resize', onWindowResize, false );
-			}
-
-			function onWindowResize() {
+				DevEngine.scene = new THREE.Scene();
+				DevEngine.renderer = new THREE.WebGLRenderer({antialias:true}); 
 				
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
+				DevEngine.renderer.setSize( WIDTH, HEIGHT );
+				DevEngine.renderer.setClearColor(0xf0f0f0);
+				
+				DevEngine.scene.add( new THREE.AmbientLight( 0x505050 ) );
+				
+				//DevEngine.addLight();
+				
+				DevEngine.camera = new THREE.PerspectiveCamera( 70, WIDTH / HEIGHT, 1, 1000 );
+				DevEngine.camera.position.z = 1000;
+				DevEngine.camera.lookAt(DevEngine.scene.position);
+			
+				container.appendChild( DevEngine.renderer.domElement );
+				
+				window.addEventListener( 'resize', DevEngine.onWindowResize, false );
+			};
+			
+			DevEngine.addLight = function() {
+				var light = new THREE.SpotLight( 0xffffff, 1.5 );
+				light.position.set( 0, 500, 2000 );
+				light.castShadow = true;
+				
+				DevEngine.scene.add(light);
+			};
+			
+			DevEngine.start = function() {
+				requestAnimationFrame( DevEngine.animate );
+			};
+			
+			DevEngine.animate = function() {
+				console.log("animate");
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
-			}
+				//do staff
 
-			function animate() {
-				requestAnimationFrame( animate );
-				renderer.render( scene, camera );
+				DevEngine.renderer.render( DevEngine.scene, DevEngine.camera );
+				requestAnimationFrame( DevEngine.animate );
+			};
+			
+			DevEngine.onWindowResize = function () {
+				
+				DevEngine.camera.aspect = window.innerWidth / window.innerHeight;
+				DevEngine.camera.updateProjectionMatrix();
+
+				DevEngine.renderer.setSize( window.innerWidth, window.innerHeight );
 			}
+			
+			window.DevEngine.init();
+			window.DevEngine.start();
+
+			
 
 		</script>
 
