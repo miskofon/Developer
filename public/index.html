@@ -25,6 +25,21 @@
 			DevEngine.meshes = {};
 			//animate();
 
+			function Floor(position, depth, width) {
+				this.pos = position;
+				this.width = width;
+				this.depth = depth;
+				
+				this.getMesh = function() {
+					var planeMesh = new THREE.Mesh(new THREE.PlaneGeometry(this.width, this.depth), new THREE.MeshNormalMaterial());
+					//planeMesh.rotateY(Math.PI / 4);
+					//planeMesh.rotateX(Math.PI / 4);
+					return planeMesh;
+				};
+				
+			};
+			
+			
 					
 			DevEngine.init = function() {
 			var WIDTH = window.innerWidth,
@@ -43,8 +58,10 @@
 				
 				//DevEngine.addLight();
 				
-				DevEngine.camera = new THREE.PerspectiveCamera( 70, WIDTH / HEIGHT, 1, 1000 );
-				DevEngine.camera.position.z = 1000;
+				DevEngine.camera = new THREE.PerspectiveCamera( 50, WIDTH / HEIGHT, 1, 1000 );
+				DevEngine.camera.position.x = 0;
+				DevEngine.camera.position.y = -300;
+				DevEngine.camera.position.z = 50;
 				DevEngine.camera.lookAt(DevEngine.scene.position);
 			
 				container.appendChild( DevEngine.renderer.domElement );
@@ -62,11 +79,12 @@
 			
 			DevEngine.start = function() {
 				requestAnimationFrame( DevEngine.animate );
+				
+				var floor = new Floor(new THREE.Vector3( 0, 0, 0 ), 400, 400);
+				DevEngine.scene.add(floor.getMesh());
 			};
 			
 			DevEngine.animate = function() {
-				console.log("animate");
-
 				//do staff
 
 				DevEngine.renderer.render( DevEngine.scene, DevEngine.camera );
