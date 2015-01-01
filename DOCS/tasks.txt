@@ -1,0 +1,16 @@
+
+Zalozenia:
+ - tworzenie pojedynej sciany poprzez interakcje
+ - domyslna grubosc
+
+Zadania:
+1. Stworzyc prosty mechanizm do renderowania scen.
+2. Dodac prosty model podlogi (punkt poczatku i wielkosc.
+3. Wyswietlic podloge.
+7. Dodac prosta interakcje, która bedzie przekazywac obiekty beda wyswietlane.
+4. Implementacja w interakcji sledzenia myszy.
+8. Implementacja obslugi podlogi (nie moze wychodzic poza podloge).
+5. Dodac prosty model sciany (poczatek, transformacja i siatka).
+6. Dodac obsluge klikniecia - tworzenie instancji sciany.
+9. Implementacja obslugi tworzenia siatki sciany.
+10. Implementacja w interakcji regeneracji siatki podczas ruchu myszy.
