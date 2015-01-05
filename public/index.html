@@ -23,17 +23,21 @@
 			DevEngine.walls = {};
 			DevEngine.interactions = {};
 			DevEngine.meshes = {};
+			DevEngine.floors = [];
 			//animate();
 
-			function Floor(position, depth, width) {
+			function SimpleFloor(position, depth, width, color) {
 				this.pos = position;
 				this.width = width;
 				this.depth = depth;
+				this.color = color;
 				
 				this.getMesh = function() {
-					var planeMesh = new THREE.Mesh(new THREE.PlaneGeometry(this.width, this.depth), new THREE.MeshNormalMaterial());
-					//planeMesh.rotateY(Math.PI / 4);
-					//planeMesh.rotateX(Math.PI / 4);
+					var material = new THREE.MeshBasicMaterial({color: this.color});
+					var planeMesh = new THREE.Mesh(new THREE.PlaneGeometry(this.width, this.depth), material);
+					planeMesh.position.x = this.pos.x;
+					planeMesh.position.y = this.pos.y;
+					planeMesh.position.z = this.pos.z;
 					return planeMesh;
 				};
 				
@@ -56,7 +60,7 @@
 				
 				DevEngine.scene.add( new THREE.AmbientLight( 0x505050 ) );
 				
-				//DevEngine.addLight();
+				DevEngine.addLight();
 				
 				DevEngine.camera = new THREE.PerspectiveCamera( 50, WIDTH / HEIGHT, 1, 1000 );
 				DevEngine.camera.position.x = 0;
@@ -67,6 +71,11 @@
 				container.appendChild( DevEngine.renderer.domElement );
 				
 				window.addEventListener( 'resize', DevEngine.onWindowResize, false );
+			};
+			
+			DevEngine.addFloor = function (floor) {
+				DevEngine.floors.push(floor);
+				DevEngine.scene.add(floor.getMesh());
 			};
 			
 			DevEngine.addLight = function() {
@@ -80,8 +89,8 @@
 			DevEngine.start = function() {
 				requestAnimationFrame( DevEngine.animate );
 				
-				var floor = new Floor(new THREE.Vector3( 0, 0, 0 ), 400, 400);
-				DevEngine.scene.add(floor.getMesh());
+				var floor = new SimpleFloor(new THREE.Vector3( 0, 0, 0 ), 400, 400, 0x5050FF);
+				DevEngine.addFloor(floor);
 			};
 			
 			DevEngine.animate = function() {
