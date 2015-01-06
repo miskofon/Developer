@@ -18,46 +18,86 @@
 		<script>
 
 			window.engine = new DevEngine() || {};
+			
+			function DisplayedObject() {
+				this.visible = false;
+				this.mesh = {};
+			};
+			
+			DisplayedObject.prototype.getMesh = function() {
+				return this.mesh;
+			};
+			
+			DisplayedObject.prototype.isVisible = function() {
+				if (this.mesh == undefined) {
+					return false;
+				}
+				return this.visible;
+			};
+			
 			function DevEngine() {
 				this.walls = [];
 				this.interactions = [];
 				this.activeIntercation = null;
 				this.meshes = [];
 				this.floors = [];
+				this.lights = [];
+				this.temporaryObjects = [];
+				this.objects = [];
 				this.renderer = {};
 			};
 
+			SimpleFloor.prototype = new DisplayedObject();
+			SimpleFloor.prototype.constructor = SimpleFloor;
 			function SimpleFloor(position, depth, width, color) {
 				this.pos = position;
 				this.width = width;
 				this.depth = depth;
 				this.color = color;
-				
-				this.getMesh = function() {
-					var material = new THREE.MeshBasicMaterial({color: this.color});
-					var planeMesh = new THREE.Mesh(new THREE.PlaneGeometry(this.width, this.depth), material);
-					planeMesh.position.x = this.pos.x;
-					planeMesh.position.y = this.pos.y;
-					planeMesh.position.z = this.pos.z;
-					return planeMesh;
-				};
-				
 			};
 			
+			SimpleFloor.prototype.createMesh = function() {
+				var material = new THREE.MeshBasicMaterial({color: this.color});
+				this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(this.width, this.depth), material);
+				this.mesh.position.x = this.pos.x;
+				this.mesh.position.y = this.pos.y;
+				this.mesh.position.z = this.pos.z;
+				this.visible = true;
+			};
+			
+			
+			SimpleWall.prototype = new DisplayedObject();
 			function SimpleWall() {
-				this.getMesh = function() {
-					if (this.mesh == undefined) {
-						var sphereMaterial = new THREE.MeshLambertMaterial( {color: 0x00ff00} ); 
-						this.mesh = new THREE.Mesh( new THREE.SphereGeometry( 30, 12, 12), sphereMaterial );
-					}
-					return this.mesh;
+				this.createMesh = function() {
+					var sphereMaterial = new THREE.MeshLambertMaterial( {color: 0x00ff00} ); 
+					this.mesh = new THREE.Mesh( new THREE.SphereGeometry( 30, 12, 12), sphereMaterial );
+					this.visible = true;
 				};
 			};
 			
-			function SimpleInteraction() {
-				this.getObjects2Display = function() {
-					if (this.wall == undefined) {
+			
+			
+			function SimpleInteraction(engine) {
+				this.engine = engine;
+				this.wall = null
+				this.onMouseMove = function(event, raycaster) {
+					var intersects = raycaster.intersectObject();
+					if (this.wall != undefined && this.wall != null) {
+						var mesh = this.wall.getMesh();
+						mesh.position.x += 1;
+					}
+				};
+				
+				this.onClick = function(event) {
+					if (this.wall == undefined || this.wall == null) {
 						this.wall = new SimpleWall();
+						this.wall.createMesh();
+					};
+				};
+				
+				this.getObjects2Display = function() {
+					if (this.wall == undefined || this.wall == null) {
+							return [];
 					}
 					return [this.wall];
 				};
@@ -76,9 +116,13 @@
 				this.renderer.setSize( this.WIDTH, this.HEIGHT );
 				this.renderer.setClearColor(0xf0f0f0);
 				
-				this.scene.add( new THREE.AmbientLight( 0x505050 ) );
+				this.addLight( new THREE.AmbientLight( 0x505050 ) );
 				
-				this.addLight();
+				var light = new THREE.SpotLight( 0xffffff, 1.5 );
+				light.position.set( 0, 500, 2000 );
+				light.castShadow = true;
+				
+				this.addLight(light);
 				
 				this.camera = new THREE.PerspectiveCamera( 50, this.WIDTH / this.HEIGHT, 1, 1000 );
 				this.camera.position.x = 0;
@@ -90,6 +134,53 @@
 				
 				var that = this;
 				window.addEventListener( 'resize', function() { that.onWindowResize();} , false );
+				window.addEventListener( 'mousemove', function(event) { that.onMouseMove(event);} , false );
+				window.addEventListener( 'mousedown', function() { that.onMouseDown();} , false );
+				window.addEventListener( 'mouseup', function() { that.onMouseUp();} , false );
+				window.addEventListener( 'click', function() { that.onClick();} , false );
+			};
+			
+			DevEngine.prototype.onMouseMove = function(event) {
+				if (this.activeInteraction != undefined) {
+					if (typeof this.activeInteraction.onMouseMove == 'function') {
+						event.preventDefault();
+						var mouse = new THREE.Vector2()
+						mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+						mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+						//
+
+						var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5 ).unproject( this.camera );
+
+						var raycaster = new THREE.Raycaster( this.camera.position, vector.sub( this.camera.position ).normalize() );
+						
+						this.activeInteraction.onMouseMove(event, raycaster);
+					}
+				}
+			};
+			
+			DevEngine.prototype.onMouseUp = function(event) {
+				if (this.activeInteraction != undefined) {
+					if (typeof this.activeInteraction.onMouseUp == 'function') {
+						this.activeInteraction.onMouseUp(event);
+					}
+				}
+			};
+			
+			DevEngine.prototype.onMouseDown = function(event) {
+				if (this.activeInteraction != undefined) {
+					if (typeof this.activeInteraction.onMouseDown == 'function') {
+						this.activeInteraction.onMouseDown(event);
+					}
+				}
+			};
+			
+			DevEngine.prototype.onClick = function(event) {
+				if (this.activeInteraction != undefined) {
+					if (typeof this.activeInteraction.onClick == 'function') {
+						this.activeInteraction.onClick(event);
+					}
+				}
 			};
 			
 			DevEngine.prototype.addMeshElement = function(mesh) {
@@ -100,15 +191,22 @@
 			
 			DevEngine.prototype.addFloor = function (floor) {
 				this.floors.push(floor);
-				this.addMeshElement(floor.getMesh());
+				this.addObject(floor);
+				//this.addMeshElement(floor.getMesh());
 			};
 			
-			DevEngine.prototype.addLight = function() {
-				var light = new THREE.SpotLight( 0xffffff, 1.5 );
-				light.position.set( 0, 500, 2000 );
-				light.castShadow = true;
-				
-				this.scene.add(light);
+			DevEngine.prototype.addObject = function(object) {
+				if (object instanceof DisplayedObject) {
+					if ($.inArray(object, this.objects) == -1) {
+						this.objects.push(object);
+					}
+				} else {
+					console.log("Object of incorrect type added. Type:" + typeof object);
+				}
+			};
+			
+			DevEngine.prototype.addLight = function(light) {
+				this.lights.push(light);
 			};
 			
 			DevEngine.prototype.start = function() {
@@ -116,23 +214,50 @@
 				requestAnimationFrame(function() { that.animate();} );
 				
 				var floor = new SimpleFloor(new THREE.Vector3( 0, 0, 0 ), 400, 400, 0x5050FF);
+				floor.createMesh();
 				this.addFloor(floor);
 				
-				this.activeInteraction = new SimpleInteraction();
+				this.activeInteraction = new SimpleInteraction(this);
 				this.interactions.push(this.activeInteraction);
 			};
 
 			DevEngine.prototype.animate = function() {
-
-				//do staff
 				var that = this;
+				
+				//handle interactions
 				if (this.activeInteraction != undefined) {
 					var objects = this.activeInteraction.getObjects2Display();
 					$.each(objects, function(objectIndex, object) {
-						that.addMeshElement(object.getMesh());
+						if ($.inArray(object, this.temporaryObjects) == -1) {
+							that.temporaryObjects.push(object);
+						}
 					});
 				}
+				
+				//clear scene
+				$.each(this.scene.children, function(index, object) {
+					that.scene.remove(object);
+				});
+				
+				//add lights
+				$.each(this.lights, function(index, light) {
+					that.scene.add(light);
+				});
+				
+				//add objects
+				$.each(this.objects, function(index, object) {
+					if (object.isVisible()) {
+						that.scene.add(object.getMesh());
+					}
+				});
 
+				//add temporary objects
+				$.each(this.temporaryObjects, function(index, object) {
+					if (object.isVisible()) {
+						that.scene.add(object.getMesh());
+					}
+				});
+				
 				this.renderer.render( this.scene, this.camera );
 				requestAnimationFrame(function() { that.animate();} );
 			};
