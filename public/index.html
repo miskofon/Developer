@@ -21,7 +21,7 @@
 			
 			function DisplayedObject() {
 				this.visible = false;
-				this.mesh = {};
+				this.mesh = null;
 			};
 			
 			DisplayedObject.prototype.getMesh = function() {
@@ -29,7 +29,7 @@
 			};
 			
 			DisplayedObject.prototype.isVisible = function() {
-				if (this.mesh == undefined) {
+				if (this.mesh == null) {
 					return false;
 				}
 				return this.visible;
@@ -45,6 +45,7 @@
 				this.temporaryObjects = [];
 				this.objects = [];
 				this.renderer = {};
+				this.mapObjects = new Map();
 			};
 
 			SimpleFloor.prototype = new DisplayedObject();
@@ -68,10 +69,15 @@
 			
 			SimpleWall.prototype = new DisplayedObject();
 			function SimpleWall() {
-				this.createMesh = function() {
+				this.createMesh = function(pos) {
 					var sphereMaterial = new THREE.MeshLambertMaterial( {color: 0x00ff00} ); 
 					this.mesh = new THREE.Mesh( new THREE.SphereGeometry( 30, 12, 12), sphereMaterial );
 					this.visible = true;
+					this.mesh.position.copy(pos);
+				};
+				
+				this.setPosition = function(pos) {
+					this.mesh.position.copy(pos);
 				};
 			};
 			
@@ -79,19 +85,28 @@
 			
 			function SimpleInteraction(engine) {
 				this.engine = engine;
-				this.wall = null
-				this.onMouseMove = function(event, raycaster) {
-					var intersects = raycaster.intersectObject();
+				this.wall = null;
+				this.onMouseMove = function(event, intersections) {
 					if (this.wall != undefined && this.wall != null) {
-						var mesh = this.wall.getMesh();
-						mesh.position.x += 1;
+						var intersection = null;
+						for(i=0; i<intersections.length; ++i) {
+							if (intersections[i].object != this.wall.getMesh()) {
+								intersection = intersections[i];
+								break;
+							}
+						}
+						
+						if (intersection != null) {
+							var mesh = this.wall.getMesh();							
+							mesh.position.copy(intersection.point);
+						}
 					}
 				};
 				
-				this.onClick = function(event) {
+				this.onClick = function(event, intersections) {
 					if (this.wall == undefined || this.wall == null) {
 						this.wall = new SimpleWall();
-						this.wall.createMesh();
+						this.wall.createMesh(intersections[0].point);
 					};
 				};
 				
@@ -137,24 +152,22 @@
 				window.addEventListener( 'mousemove', function(event) { that.onMouseMove(event);} , false );
 				window.addEventListener( 'mousedown', function() { that.onMouseDown();} , false );
 				window.addEventListener( 'mouseup', function() { that.onMouseUp();} , false );
-				window.addEventListener( 'click', function() { that.onClick();} , false );
+				window.addEventListener( 'click', function(event) { that.onClick(event);} , false );
 			};
 			
 			DevEngine.prototype.onMouseMove = function(event) {
 				if (this.activeInteraction != undefined) {
 					if (typeof this.activeInteraction.onMouseMove == 'function') {
-						event.preventDefault();
+												event.preventDefault();
 						var mouse = new THREE.Vector2()
 						mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-						mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-
-						//
-
+						mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;					
 						var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5 ).unproject( this.camera );
 
 						var raycaster = new THREE.Raycaster( this.camera.position, vector.sub( this.camera.position ).normalize() );
-						
-						this.activeInteraction.onMouseMove(event, raycaster);
+						var intersections = raycaster.intersectObject(this.scene, true);
+			
+						this.activeInteraction.onMouseMove(event, intersections);
 					}
 				}
 			};
@@ -178,7 +191,16 @@
 			DevEngine.prototype.onClick = function(event) {
 				if (this.activeInteraction != undefined) {
 					if (typeof this.activeInteraction.onClick == 'function') {
-						this.activeInteraction.onClick(event);
+						event.preventDefault();
+						var mouse = new THREE.Vector2()
+						mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+						mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;					
+						var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5 ).unproject( this.camera );
+
+						var raycaster = new THREE.Raycaster( this.camera.position, vector.sub( this.camera.position ).normalize() );
+						var intersections = raycaster.intersectObject(this.scene, true);
+			
+						this.activeInteraction.onClick(event, intersections);
 					}
 				}
 			};
@@ -225,12 +247,11 @@
 				var that = this;
 				
 				//handle interactions
+				that.temporaryObjects = [];
 				if (this.activeInteraction != undefined) {
 					var objects = this.activeInteraction.getObjects2Display();
 					$.each(objects, function(objectIndex, object) {
-						if ($.inArray(object, this.temporaryObjects) == -1) {
-							that.temporaryObjects.push(object);
-						}
+						that.temporaryObjects.push(object);
 					});
 				}
 				
@@ -238,6 +259,8 @@
 				$.each(this.scene.children, function(index, object) {
 					that.scene.remove(object);
 				});
+				
+				this.mapObjects.clear();
 				
 				//add lights
 				$.each(this.lights, function(index, light) {
@@ -247,14 +270,18 @@
 				//add objects
 				$.each(this.objects, function(index, object) {
 					if (object.isVisible()) {
-						that.scene.add(object.getMesh());
+						var mesh = object.getMesh();
+						that.scene.add(mesh);
+						that.mapObjects.set(mesh, object);
 					}
 				});
 
 				//add temporary objects
 				$.each(this.temporaryObjects, function(index, object) {
 					if (object.isVisible()) {
-						that.scene.add(object.getMesh());
+						var mesh = object.getMesh();
+						that.scene.add(mesh);
+						that.mapObjects.set(mesh, object);
 					}
 				});
 				
