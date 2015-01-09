@@ -70,10 +70,78 @@
 			SimpleWall.prototype = new DisplayedObject();
 			function SimpleWall() {
 				this.createMesh = function(pos) {
-					var sphereMaterial = new THREE.MeshLambertMaterial( {color: 0x00ff00} ); 
-					this.mesh = new THREE.Mesh( new THREE.SphereGeometry( 30, 12, 12), sphereMaterial );
+					this.mesh = this.generateMesh(pos, pos, 2, 20);
 					this.visible = true;
-					this.mesh.position.copy(pos);
+				};
+				
+				this.recreateMesh = function(startPos, endPos) {
+					var oldMesh = this.getMesh();
+					if (oldMesh == undefined | oldMesh == null) {
+						return;
+					}
+					
+					this.mesh = this.generateMesh(startPos, endPos, 2, 20);
+				};
+				
+				this.generateMesh = function(start, end, width, height) {
+					var wallMesh = new THREE.Object3D();
+					
+					var length = end.distanceTo(start);
+					if (length < width) {
+						length = width;
+					}
+					
+					var div = new THREE.Vector2().subVectors(end,start);
+					var wallColor = 0x808080;
+					//create front plane
+					var inter = new THREE.Mesh(new THREE.PlaneGeometry(length, height), new THREE.MeshBasicMaterial({color: wallColor}));
+					//var frontTransform = new THREE.Matrix4();
+					//frontTransform.makeRotationX(Math.PI);
+					//front.matrix = frontTransform;
+					inter.lookAt(new THREE.Vector3(1.0, 0.0, 0.0));
+					inter.rotation.x = Math.PI / 2;
+					inter.position.x = width / 2;
+					inter.position.y = -length /2;
+					inter.position.z = height / 2;
+					wallMesh.add(inter);
+					
+					var outSide = new THREE.Mesh(new THREE.PlaneGeometry(length, height), new THREE.MeshBasicMaterial({color: wallColor}));
+					outSide.lookAt(new THREE.Vector3(-1.0, 0.0, 0.0));
+					outSide.rotation.x = Math.PI / 2;
+					outSide.position.x = -width / 2;
+					outSide.position.y =- length / 2;
+					outSide.position.z = height / 2;
+					wallMesh.add(outSide);
+					
+					var back = new THREE.Mesh(new THREE.PlaneGeometry(width, height), new THREE.MeshBasicMaterial({color: wallColor}));
+					back.lookAt(new THREE.Vector3(0.0, 1.0, 0.0));
+					back.rotation.z = 0;
+					back.position.y = 0;
+					back.position.z = height / 2;
+					back.doubleSide = true;
+					wallMesh.add(back);
+					
+					var front = new THREE.Mesh(new THREE.PlaneGeometry(width, height), new THREE.MeshBasicMaterial({color: wallColor}));
+					front.lookAt(new THREE.Vector3(0.0, -1.0, 0.0));
+					front.rotation.z = 0;
+					front.position.x = 0;
+					front.position.y = -length;
+					front.position.z = height / 2;
+					wallMesh.add(front);
+					
+					var top = new THREE.Mesh(new THREE.PlaneGeometry(width, length), new THREE.MeshBasicMaterial({color: 0xffffff}));
+					top.lookAt(new THREE.Vector3(0.0, 0.0, 1.0));
+					top.position.x = 0;
+					top.position.y = -length/2;
+					top.position.z = height;
+					wallMesh.add(top);
+					
+					
+					if (div.x != 0 || div.y != 0) {
+						wallMesh.rotation.z = new THREE.Vector3(div.x, div.y, 0).angleTo(new THREE.Vector3(0.0, -1.0, 0.0)) * Math.sign(div.x);
+					}
+					wallMesh.position.copy(start);
+					return wallMesh;
 				};
 				
 				this.setPosition = function(pos) {
@@ -83,22 +151,25 @@
 			
 			
 			
-			function SimpleInteraction(engine) {
+			function SimpleInteraction(engine,floor) {
 				this.engine = engine;
+				this.floor = floor;
 				this.wall = null;
+				this.startPoint = null;
 				this.onMouseMove = function(event, intersections) {
 					if (this.wall != undefined && this.wall != null) {
 						var intersection = null;
 						for(i=0; i<intersections.length; ++i) {
-							if (intersections[i].object != this.wall.getMesh()) {
+							if (intersections[i].object.id == this.floor.mesh.id) {
 								intersection = intersections[i];
 								break;
 							}
 						}
 						
 						if (intersection != null) {
-							var mesh = this.wall.getMesh();							
-							mesh.position.copy(intersection.point);
+							this.wall.recreateMesh(this.startPoint, new THREE.Vector2(intersection.point.x, intersection.point.y));
+							var mesh = this.wall.getMesh();
+							mesh.position.z = 0;
 						}
 					}
 				};
@@ -106,8 +177,15 @@
 				this.onClick = function(event, intersections) {
 					if (this.wall == undefined || this.wall == null) {
 						this.wall = new SimpleWall();
-						this.wall.createMesh(intersections[0].point);
-					};
+						var point = intersections[0].point;
+						var pos = new THREE.Vector2(point.x, point.y);
+						this.wall.createMesh(pos);
+						this.startPoint = pos;
+					} else {
+						this.engine.objects.push(this.wall);
+						this.wall = null;
+						this.startPoint = null;
+					}
 				};
 				
 				this.getObjects2Display = function() {
@@ -239,7 +317,7 @@
 				floor.createMesh();
 				this.addFloor(floor);
 				
-				this.activeInteraction = new SimpleInteraction(this);
+				this.activeInteraction = new SimpleInteraction(this, floor);
 				this.interactions.push(this.activeInteraction);
 			};
 
@@ -291,10 +369,10 @@
 			
 			DevEngine.prototype.onWindowResize = function () {
 				
-				DevEngine.camera.aspect = window.innerWidth / window.innerHeight;
-				DevEngine.camera.updateProjectionMatrix();
+				this.camera.aspect = window.innerWidth / window.innerHeight;
+				this.camera.updateProjectionMatrix();
 
-				DevEngine.renderer.setSize( window.innerWidth, window.innerHeight );
+				this.renderer.setSize( window.innerWidth, window.innerHeight );
 			}
 			
 			
