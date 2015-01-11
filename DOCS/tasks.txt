@@ -14,3 +14,6 @@ Zadania:
 6. Dodac obsluge klikniecia - tworzenie instancji sciany.
 9. Implementacja obslugi tworzenia siatki sciany.
 10. Implementacja w interakcji regeneracji siatki podczas ruchu myszy.
+11. Obsluga wyswietlania mozliwych akcji.
+12. Obsluga startu akcji (interakcji).
+13. Obslugasnapowania do instniejacych scian.

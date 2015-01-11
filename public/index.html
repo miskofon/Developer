@@ -9,12 +9,40 @@
 				background-color: #000000;
 				overflow: hidden;
 			}
+			
+			.action-button {
+				border-radius: 10px;
+				background-color: #ffffff;
+				margin: 5px;
+				padding: 10px;
+				text-align: center;
+				box-shadow: 7px 7px 5px #888888;
+				z-index: 100;
+				position: absolute;
+			}
+			
+			.action-button:hover, .action-button-running {
+				margin-left: 7px;
+				margin-top: 7px;
+				box-shadow: 4px 4px 5px #888888;
+			}
+			
+			.action-button-running {
+				font-weight: bold;
+			}
+			
 		</style>
 		<script src="js/three.js"></script>
 		<script src="js/Detector.js"></script>
 		<script src="js/jquery-2.1.3.min.js"></script>
 	</head>
 	<body>
+		<div id="addWall" class="action-button" style="top: 0px; width: 80px;"><div onClick="window.engine.startAddWall();">Add wall</div></div>
+		<div id="outputDiv">
+		</div>
+		
+		
+		
 		<script>
 
 			window.engine = new DevEngine() || {};
@@ -149,38 +177,68 @@
 				};
 			};
 			
-			
+			SelectionPointer.prototype = new DisplayedObject();
+			function SelectionPointer() {
+				this.createMesh = function() {
+					var geometry = new THREE.SphereGeometry( 1, 32, 32 ); 
+					var material = new THREE.MeshBasicMaterial( {color: 0xffff00} ); 
+					this.mesh = new THREE.Mesh( geometry, material );
+				};
+			};
 			
 			function SimpleInteraction(engine,floor) {
 				this.engine = engine;
 				this.floor = floor;
 				this.wall = null;
 				this.startPoint = null;
+				this.selectionObject = null;
+				this.start = function() {
+					this.selectionObject = new SelectionPointer();
+					this.selectionObject.createMesh();
+				};
 				this.onMouseMove = function(event, intersections) {
-					if (this.wall != undefined && this.wall != null) {
-						var intersection = null;
-						for(i=0; i<intersections.length; ++i) {
-							if (intersections[i].object.id == this.floor.mesh.id) {
-								intersection = intersections[i];
-								break;
-							}
+					var intersection = null;
+					for(i=0; i<intersections.length; ++i) {
+						if (intersections[i].object.id == this.floor.mesh.id) {
+							intersection = intersections[i];
+							break;
 						}
+					}
 						
+					if (this.wall != undefined && this.wall != null) {
 						if (intersection != null) {
 							this.wall.recreateMesh(this.startPoint, new THREE.Vector2(intersection.point.x, intersection.point.y));
 							var mesh = this.wall.getMesh();
 							mesh.position.z = 0;
+							if (this.selectionObject != null) {
+								this.selectionObject.getMesh().position.copy(intersection.point);
+							}
+						}
+					}
+					
+					if (intersection != null) {
+						if (this.selectionObject != null) {
+							this.selectionObject.getMesh().position.copy(intersection.point);
+							this.selectionObject.visible = true;
+						} else {
+							this.selectionObject.visible = false;
 						}
 					}
 				};
 				
+				this.onKeyPressed = function(event) {
+
+				};
+
 				this.onClick = function(event, intersections) {
 					if (this.wall == undefined || this.wall == null) {
-						this.wall = new SimpleWall();
-						var point = intersections[0].point;
-						var pos = new THREE.Vector2(point.x, point.y);
-						this.wall.createMesh(pos);
-						this.startPoint = pos;
+						if (intersections.length > 0) {
+							this.wall = new SimpleWall();
+							var point = intersections[0].point;
+							var pos = new THREE.Vector2(point.x, point.y);
+							this.wall.createMesh(pos);
+							this.startPoint = pos;
+						}
 					} else {
 						this.engine.objects.push(this.wall);
 						this.wall = null;
@@ -189,10 +247,14 @@
 				};
 				
 				this.getObjects2Display = function() {
-					if (this.wall == undefined || this.wall == null) {
-							return [];
+					var objects = [];
+					if (this.wall != undefined && this.wall != null) {
+						objects.push(this.wall);
 					}
-					return [this.wall];
+					if (this.selectionObject != null) {
+						objects.push(this.selectionObject);
+					};
+					return objects;
 				};
 			};
 					
@@ -200,8 +262,7 @@
 				this.WIDTH = window.innerWidth;
 				this.HEIGHT = window.innerHeight;
 				
-				var container = document.createElement( 'div' );
-				document.body.appendChild( container );
+				var container = $("#outputDiv")[0];
 				
 				this.scene = new THREE.Scene();
 				this.renderer = new THREE.WebGLRenderer({antialias:true}); 
@@ -231,6 +292,26 @@
 				window.addEventListener( 'mousedown', function() { that.onMouseDown();} , false );
 				window.addEventListener( 'mouseup', function() { that.onMouseUp();} , false );
 				window.addEventListener( 'click', function(event) { that.onClick(event);} , false );
+				$(document).keypress(function(event) { that.onKeyPressed(event); });
+				$(document).keyup(function(event) { that.onKeyUp(event); });
+			};
+			
+			DevEngine.prototype.onKeyPressed = function(event) {
+				if (this.activeInteraction != undefined) {
+					if (typeof this.activeInteraction.onKeyPressed == 'function') {
+						this.activeInteraction.onKeyPressed(event);
+					}
+				}
+			};
+			
+			DevEngine.prototype.onKeyUp = function(event) {
+				if (this.activeInteraction != undefined) {
+					if (event.keyCode == 27) {
+						this.activeInteraction = undefined;
+						$("#addWall").removeClass("action-button-running");
+						return;
+					}
+				}
 			};
 			
 			DevEngine.prototype.onMouseMove = function(event) {
@@ -317,8 +398,16 @@
 				floor.createMesh();
 				this.addFloor(floor);
 				
-				this.activeInteraction = new SimpleInteraction(this, floor);
+				//this.activeInteraction = new SimpleInteraction(this, floor);
+				//this.interactions.push(this.activeInteraction);
+			};
+			
+			DevEngine.prototype.startAddWall = function() {
+				this.activeInteraction = new SimpleInteraction(this, this.floors[0]);
 				this.interactions.push(this.activeInteraction);
+				this.activeInteraction.start();
+				
+				$("#addWall").addClass("action-button-running");
 			};
 
 			DevEngine.prototype.animate = function() {
