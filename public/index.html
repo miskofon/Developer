@@ -52,7 +52,7 @@
 				this.objects = [];
 			};
 			
-			DevDatabase.prototype.addObject(object) {
+			DevDatabase.prototype.addObject = function(object) {
 				if (object instanceof DevObject) {				
 					$.each(this.objects, function(index, obj) {
 						if (object.id == obj.id) {
