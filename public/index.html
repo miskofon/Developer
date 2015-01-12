@@ -38,14 +38,44 @@
 	</head>
 	<body>
 		<div id="addWall" class="action-button" style="top: 0px; width: 80px;"><div onClick="window.engine.startAddWall();">Add wall</div></div>
-		<div id="outputDiv">
-		</div>
-		
-		
-		
+		<div id="outputDiv"></div>
 		<script>
 
 			window.engine = new DevEngine() || {};
+			
+			function DevObject() {
+				this.id = null;
+				this.objectType = null;
+			};
+			
+			function DevDatabase() {
+				this.objects = [];
+			};
+			
+			DevDatabase.prototype.addObject(object) {
+				if (object instanceof DevObject) {				
+					$.each(this.objects, function(index, obj) {
+						if (object.id == obj.id) {
+							return false;
+						}
+					});
+					this.objects.push(object);
+					return true;
+				} else {
+					return false;
+				}
+			};
+			
+			DevDatabase.prototype.getObjectBy = function(propName, propValue) {
+				var foundObjects = [];
+				$.each(this.objects, function(index, object) {
+					if (object[propName] != undefined && object[propName] == propValue) {
+						foundObjects.push(object);
+					}
+				});
+				
+				return foundObjects;
+			};
 			
 			function DisplayedObject() {
 				this.visible = false;
