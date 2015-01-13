@@ -41,14 +41,10 @@ DevEngine.prototype.init = function () {
     this.renderer.setSize(this.WIDTH, this.HEIGHT);
     this.renderer.setClearColor(0xf0f0f0);
 
+    //create default light
     this.addLight(new THREE.AmbientLight(0x505050));
 
-    var light = new THREE.SpotLight(0xffffff, 1.5);
-    light.position.set(0, 500, 2000);
-    light.castShadow = true;
-
-    this.addLight(light);
-
+    //create default camera
     this.camera = new THREE.PerspectiveCamera(50, this.WIDTH / this.HEIGHT, 1, 1000);
     this.camera.position.x = 0;
     this.camera.position.y = -300;
@@ -57,22 +53,23 @@ DevEngine.prototype.init = function () {
 
     container.appendChild(this.renderer.domElement);
 
+    //register events handlers
     var that = this;
-    window.addEventListener('resize', function () {
+    $(window).resize( function () {
         that.onWindowResize();
-    }, false);
-    window.addEventListener('mousemove', function (event) {
+    });
+    $(window).mousemove( function (event) {
         that.onMouseMove(event);
-    }, false);
-    window.addEventListener('mousedown', function () {
+    });
+    $(window).mousedown( function () {
         that.onMouseDown();
-    }, false);
-    window.addEventListener('mouseup', function () {
+    });
+    $(window).mouseup( function () {
         that.onMouseUp();
-    }, false);
-    window.addEventListener('click', function (event) {
+    });
+    $(window).click( function (event) {
         that.onClick(event);
-    }, false);
+    });
     $(window).keypress(function (event) {
         that.onKeyPressed(event);
     });
@@ -159,31 +156,19 @@ DevEngine.prototype.onClick = function (event) {
     }
 };
 
-DevEngine.prototype.addMeshElement = function (mesh) {
-    if ($.inArray(mesh, this.scene.children) == -1) {
-        this.scene.add(mesh);
-    }
-};
-
-DevEngine.prototype.addObject = function (object) {
-    if (object instanceof DisplayedObject) {
-        if ($.inArray(object, this.objects) == -1) {
-            this.objects.push(object);
-        }
-    } else {
-        console.log("Object of incorrect type added. Type:" + typeof object);
-    }
-};
-
 DevEngine.prototype.addLight = function (light) {
     this.lights.push(light);
 };
 
 DevEngine.prototype.start = function () {
     var that = this;
+    
+    //register function rendering view
     requestAnimationFrame(function () {
         that.animate();
     });
+    
+    //get all object which will be displayed from data store
     this.updateObjectsList();
 };
 
