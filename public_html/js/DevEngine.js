@@ -1,3 +1,6 @@
+
+window.engine = new DevEngine() || {};
+
 DisplayedObject.prototype = new DevObject();
 function DisplayedObject() {
     this.visible = false;
@@ -185,7 +188,7 @@ DevEngine.prototype.start = function () {
 };
 
 DevEngine.prototype.startAddWall = function () {
-    this.activeInteraction = new SimpleInteraction(this);
+    this.activeInteraction = new InsertSimpleWallInteraction(this);
     this.activeInteraction.start();
 
     $("#addWall").addClass("action-button-running");

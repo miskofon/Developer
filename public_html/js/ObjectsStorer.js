@@ -1,3 +1,4 @@
+window.objectsStorer = new DevDatabase() || {};
 
 function DevObject() {
     this.id = null;
