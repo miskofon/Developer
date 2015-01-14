@@ -38,6 +38,7 @@ function SimpleWall() {
         inter.position.x = width / 2;
         inter.position.y = -length / 2;
         inter.position.z = height / 2;
+        inter.devObject = this;
         wallMesh.add(inter);
 
         var outSide = new THREE.Mesh(new THREE.PlaneGeometry(length, height), new THREE.MeshBasicMaterial({color: wallColor}));
@@ -46,6 +47,7 @@ function SimpleWall() {
         outSide.position.x = -width / 2;
         outSide.position.y = -length / 2;
         outSide.position.z = height / 2;
+        outSide.devObject = this;
         wallMesh.add(outSide);
 
         var back = new THREE.Mesh(new THREE.PlaneGeometry(width, height), new THREE.MeshBasicMaterial({color: wallColor}));
@@ -54,6 +56,7 @@ function SimpleWall() {
         back.position.y = 0;
         back.position.z = height / 2;
         back.doubleSide = true;
+        back.devObject = this;
         wallMesh.add(back);
 
         var front = new THREE.Mesh(new THREE.PlaneGeometry(width, height), new THREE.MeshBasicMaterial({color: wallColor}));
@@ -62,6 +65,7 @@ function SimpleWall() {
         front.position.x = 0;
         front.position.y = -length;
         front.position.z = height / 2;
+        front.devObject = this;
         wallMesh.add(front);
 
         var top = new THREE.Mesh(new THREE.PlaneGeometry(width, length), new THREE.MeshBasicMaterial({color: 0xffffff}));
@@ -69,13 +73,14 @@ function SimpleWall() {
         top.position.x = 0;
         top.position.y = -length / 2;
         top.position.z = height;
+        top.devObject = this;
         wallMesh.add(top);
-
 
         if (div.x != 0 || div.y != 0) {
             wallMesh.rotation.z = new THREE.Vector3(div.x, div.y, 0).angleTo(new THREE.Vector3(0.0, -1.0, 0.0)) * Math.sign(div.x);
         }
         wallMesh.position.copy(start);
+        wallMesh.devObject = this;
         return wallMesh;
     };
 

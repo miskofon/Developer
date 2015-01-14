@@ -7,6 +7,11 @@ function DisplayedObject() {
     this.mesh = null;
 };
 
+DisplayedObject.prototype.cloneMesh = function (material) {
+    var clonedMesh = this.mesh.clone();
+    clonedMesh.material = material;
+    return clonedMesh;
+};
 
 DisplayedObject.prototype.getMesh = function () {
     return this.mesh;
@@ -173,10 +178,17 @@ DevEngine.prototype.start = function () {
 };
 
 DevEngine.prototype.startAddWall = function () {
-    this.activeInteraction = new InsertSimpleWallInteraction(this);
+    this.activeInteraction = new InsertSimpleWallInteraction();
     this.activeInteraction.start();
 
     $("#addWall").addClass("action-button-running");
+};
+
+DevEngine.prototype.startSelectionInteraction = function() {
+    this.activeInteraction = new SelectionInteraction();
+    this.activeInteraction.start();
+
+    $("#selectionAction").addClass("action-button-running");
 };
 
 DevEngine.prototype.animate = function () {

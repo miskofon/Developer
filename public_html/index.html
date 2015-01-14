@@ -15,7 +15,7 @@ and open the template in the editor.
                 overflow: hidden;
             }
 
-            
+
 
         </style>
         <link rel="stylesheet" type="text/css" href="css/engineActions.css"></link>
@@ -26,15 +26,17 @@ and open the template in the editor.
         <script src="js/ObjectsStorer.js"></script>
         <script src="js/DevEngine.js"></script>
         <script src="js/InsertSimpleWallInteraction.js"></script>
+        <script src="js/SelectionInteraction.js"></script>
         <script src="js/DisplayedObjects/SimpleWall.js"></script>
         <script src="js/DisplayedObjects/SimpleFloor.js"></script>
         <script src="js/DisplayedObjects/SelectionPointer.js"></script>
     </head>
     <body>
         <div id="addWall" class="action-button" style="top: 0px; width: 80px;"><div onClick="window.engine.startAddWall();">Add wall</div></div>
+        <div id="selectionAction" class="action-button" style="top: 50px; width: 80px;"><div onClick="window.engine.startSelectionInteraction();">Selection</div></div>
         <div id="outputDiv"></div>
-        <script>
 
+        <script>
             var floor = new SimpleFloor(new THREE.Vector3(0, 0, 0), 400, 400, 0x5050FF);
             floor.createMesh();
             window.objectsStorer.addObject(floor);

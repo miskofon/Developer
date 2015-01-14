@@ -5,8 +5,7 @@
  */
 
 
-function InsertSimpleWallInteraction(engine) {
-    this.engine = engine;
+function InsertSimpleWallInteraction() {
     this.floor = null;
     this.wall = null;
     this.startPoint = null;

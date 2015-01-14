@@ -20,6 +20,7 @@ SimpleFloor.prototype.createMesh = function () {
     this.mesh.position.x = this.pos.x;
     this.mesh.position.y = this.pos.y;
     this.mesh.position.z = this.pos.z;
+    this.mesh.devObject = this;
     this.visible = true;
 };
 
