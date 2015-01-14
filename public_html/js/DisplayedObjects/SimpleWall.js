@@ -9,6 +9,7 @@ function SimpleWall() {
     this.createMesh = function (pos) {
         this.mesh = this.generateMesh(pos, pos, 2, 20);
         this.visible = true;
+        this.objectType = "wall";
     };
 
     this.recreateMesh = function (startPos, endPos) {

@@ -14,9 +14,6 @@ and open the template in the editor.
                 background-color: #000000;
                 overflow: hidden;
             }
-
-
-
         </style>
         <link rel="stylesheet" type="text/css" href="css/engineActions.css"></link>
         <script src="js/libs/three.js/three.js"></script>
@@ -27,13 +24,16 @@ and open the template in the editor.
         <script src="js/DevEngine.js"></script>
         <script src="js/InsertSimpleWallInteraction.js"></script>
         <script src="js/SelectionInteraction.js"></script>
+        <script src="js/RemoveWallInteraction.js"></script>
         <script src="js/DisplayedObjects/SimpleWall.js"></script>
         <script src="js/DisplayedObjects/SimpleFloor.js"></script>
         <script src="js/DisplayedObjects/SelectionPointer.js"></script>
+        
     </head>
     <body>
-        <div id="addWall" class="action-button" style="top: 0px; width: 80px;"><div onClick="window.engine.startAddWall();">Add wall</div></div>
-        <div id="selectionAction" class="action-button" style="top: 50px; width: 80px;"><div onClick="window.engine.startSelectionInteraction();">Selection</div></div>
+        <div id="addWall" class="action-button" style="top: 0px; width: 80px;" onClick="window.engine.startAddWall();">Add wall</div>
+        <div id="selectionAction" class="action-button" style="top: 50px; width: 80px;" onClick="window.engine.startSelectionInteraction();">Selection</div>
+        <div id="removeWall" class="action-button" style="top: 100px; width: 80px;" onClick="window.engine.startRemoveWallInteraction();">Remove wall</div>
         <div id="outputDiv"></div>
 
         <script>

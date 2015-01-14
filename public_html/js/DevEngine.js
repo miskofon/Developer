@@ -105,7 +105,7 @@ DevEngine.prototype.onKeyUp = function (event) {
     if (this.activeInteraction != undefined) {
         if (event.keyCode == 27) {
             this.activeInteraction = undefined;
-            $("#addWall").removeClass("action-button-running");
+            $(".action-button-running").removeClass("action-button-running");
             return;
         }
     }
@@ -189,6 +189,13 @@ DevEngine.prototype.startSelectionInteraction = function() {
     this.activeInteraction.start();
 
     $("#selectionAction").addClass("action-button-running");
+};
+
+DevEngine.prototype.startRemoveWallInteraction = function() {
+    this.activeInteraction = new RemoveWallInsteraction();
+    this.activeInteraction.start();
+
+    $("#removeWall").addClass("action-button-running");
 };
 
 DevEngine.prototype.animate = function () {

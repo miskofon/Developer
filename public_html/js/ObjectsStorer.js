@@ -41,3 +41,13 @@ DevDatabase.prototype.getObjects = function (checker) {
     return foundObjects;
     
 };
+
+DevDatabase.prototype.removeObject = function(object) {
+    var index = $.inArray(object, this.objects);
+    if (index == -1) {
+        return;
+    }
+    
+    //TOOD: find a better way
+    this.objects[index] = undefined;
+};
